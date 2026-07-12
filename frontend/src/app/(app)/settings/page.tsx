@@ -62,8 +62,9 @@ export default function SettingsPage() {
         <p className="text-sm text-muted-foreground">Depot configuration and access control</p>
       </div>
 
+      {/* Row 1 — the two small forms, side by side and equal height */}
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card className="h-fit gap-4 p-4">
+        <Card className="gap-4 p-5">
           <div className="text-sm font-semibold uppercase tracking-wide">General</div>
           <div className="space-y-1.5">
             <Label>Depot Name</Label>
@@ -79,44 +80,97 @@ export default function SettingsPage() {
               <Input value="Kilometers" disabled />
             </div>
           </div>
-          <Button className="w-fit" onClick={save}>Save changes</Button>
+          <Button className="mt-auto w-fit" onClick={save}>Save changes</Button>
         </Card>
 
-        <Card className="gap-3 p-4">
-          <div className="text-sm font-semibold uppercase tracking-wide">Role-Based Access (RBAC)</div>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Role</TableHead>
-                  {RESOURCES.map((r) => <TableHead key={r} className="text-center text-xs">{RES_LABELS[r]}</TableHead>)}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(Object.keys(MATRIX) as Role[]).map((role) => (
-                  <TableRow key={role}>
-                    <TableCell className="font-medium whitespace-nowrap">{ROLE_LABELS[role]}</TableCell>
-                    {RESOURCES.map((res) => {
-                      const a = MATRIX[role][res];
-                      return (
-                        <TableCell key={res} className="text-center">
-                          {a === "full" ? <span className="text-signal-available">✓</span>
-                            : a === "view" ? <span className="text-xs text-muted-foreground">view</span>
-                            : <span className="text-muted-foreground/40">–</span>}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <p className="text-xs text-muted-foreground">✓ full · view read-only · – no access. Enforced server-side.</p>
-        </Card>
+        <ChangePassword />
       </div>
 
+      {/* Row 2 — the wide RBAC table, full width */}
+      <Card className="gap-3 p-5">
+        <div className="text-sm font-semibold uppercase tracking-wide">Role-Based Access (RBAC)</div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Role</TableHead>
+                {RESOURCES.map((r) => <TableHead key={r} className="text-center text-xs">{RES_LABELS[r]}</TableHead>)}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(Object.keys(MATRIX) as Role[]).map((role) => (
+                <TableRow key={role}>
+                  <TableCell className="font-medium whitespace-nowrap">{ROLE_LABELS[role]}</TableCell>
+                  {RESOURCES.map((res) => {
+                    const a = MATRIX[role][res];
+                    return (
+                      <TableCell key={res} className="text-center">
+                        {a === "full" ? <span className="text-signal-available">✓</span>
+                          : a === "view" ? <span className="text-xs text-muted-foreground">view</span>
+                          : <span className="text-muted-foreground/40">–</span>}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <p className="text-xs text-muted-foreground">✓ full · view read-only · – no access. Enforced server-side.</p>
+      </Card>
+
+      {/* Row 3 — user management, full width */}
       <UserManagement />
     </div>
+  );
+}
+
+function ChangePassword() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
+
+  const change = useMutation({
+    mutationFn: () => api("/auth/password", {
+      method: "POST", body: JSON.stringify({ current_password: current, new_password: next }),
+    }),
+    onSuccess: () => {
+      setCurrent(""); setNext(""); setConfirm("");
+      toast.success("Password changed — use it next time you sign in");
+    },
+    onError: (e: ApiError) => toast.error(e.detail),
+  });
+
+  const mismatch = confirm.length > 0 && next !== confirm;
+  const tooShort = next.length > 0 && next.length < 8;
+  const canSubmit = current && next.length >= 8 && next === confirm && !change.isPending;
+
+  return (
+    <Card className="gap-4 p-5">
+      <div className="text-sm font-semibold uppercase tracking-wide">Change Password</div>
+      <p className="text-xs text-muted-foreground">
+        Rotate the password you sign in with. Clerk (admin) accounts change it in Clerk.
+      </p>
+      <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); change.mutate(); }}>
+        <div className="space-y-1.5">
+          <Label>Current password</Label>
+          <Input type="password" value={current} onChange={(e) => setCurrent(e.target.value)} required />
+        </div>
+        <div className="space-y-1.5">
+          <Label>New password</Label>
+          <Input type="password" value={next} onChange={(e) => setNext(e.target.value)} required />
+          {tooShort && <p className="text-xs text-destructive">At least 8 characters.</p>}
+        </div>
+        <div className="space-y-1.5">
+          <Label>Confirm new password</Label>
+          <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+          {mismatch && <p className="text-xs text-destructive">Passwords don&apos;t match.</p>}
+        </div>
+        <Button type="submit" className="w-fit" disabled={!canSubmit}>
+          {change.isPending ? "Changing…" : "Change password"}
+        </Button>
+      </form>
+    </Card>
   );
 }
 
@@ -145,7 +199,7 @@ function UserManagement() {
   });
 
   return (
-    <Card className="gap-4 p-4">
+    <Card className="gap-4 p-5">
       <div className="text-sm font-semibold uppercase tracking-wide">User Management</div>
       <p className="text-xs text-muted-foreground">
         Create accounts for other roles. A password is generated once — copy it and hand it to the

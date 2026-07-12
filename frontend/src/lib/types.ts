@@ -114,6 +114,26 @@ export type Maintenance = {
 export type TripOptions = {
   available_vehicles: { id: number; name: string; registration_no: string; max_capacity_kg: number }[];
   available_drivers: { id: number; name: string; license_no: string; safety_score: number }[];
+  recommended: { vehicle_id: number | null; driver_id: number | null; reason: string | null };
+};
+
+export type ServiceDue = {
+  vehicle_id: number;
+  vehicle_name: string | null;
+  service_type: string;
+  last_date: string;
+  due_date: string;
+  days_left: number;
+  state: "overdue" | "due_soon";
+};
+
+export type FuelAnomaly = {
+  trip_code: string;
+  vehicle_name: string | null;
+  efficiency_km_l: number;
+  baseline_km_l: number;
+  pct_below: number;
+  completed_at: string | null;
 };
 
 export const VEHICLE_TYPES = ["Van", "Truck", "Mini"] as const;

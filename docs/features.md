@@ -14,6 +14,8 @@ Two ways in, one role model:
   credentials.
 - **User management** (Settings, Fleet Manager only) — create a user with a role; the app generates a
   one-time password to share. Lists all users.
+- **Change password** (Settings, any signed-in role) — issued/demo users can rotate their own
+  password; verified against the current one, server-side. Clerk admins change it in Clerk.
 - **Role-based access control** enforced server-side and mirrored in the UI — each role sees only its
   screens, and write actions are hidden for view-only roles. A blocked request returns 403 even if the
   UI is bypassed.
@@ -39,6 +41,9 @@ Two ways in, one role model:
 - Create a trip, assign an available vehicle and driver (only eligible ones appear), and dispatch.
 - **Live capacity check** — cargo over the vehicle's limit shows "Capacity exceeded by N kg" and
   disables dispatch before the request is even sent.
+- **Recommended assignment** — as you enter the cargo weight, the backend suggests the best available
+  vehicle + driver (smallest vehicle that still fits, tie-broken by cost-per-km; safest available
+  driver) with a one-line reason. One click applies it; the dispatcher can always override.
 - Dispatch sets both vehicle and driver to On Trip; complete records the odometer and fuel and returns
   both to Available; cancel restores them.
 
@@ -47,12 +52,16 @@ Two ways in, one role model:
 - Log service records against a vehicle (type, cost, date, Active/Completed).
 - Opening an **Active** record moves the vehicle to In Shop and out of the dispatch pool; closing it
   returns the vehicle to Available (unless retired) — all automatic.
+- **Service Due** — a red-flag list of vehicles whose next routine service is overdue or due soon,
+  predicted from each service type's cadence (days since the last log of that type).
 
 ## Fuel & expenses
 
 - Log fuel (with optional trip link) and other expenses (toll / misc).
 - **Total operational cost** (fuel + maintenance) is computed on the server and shown as a live footer —
   never calculated in the browser.
+- **Fuel anomalies** — completed trips burning notably more fuel per km than the vehicle's own median
+  are flagged with how far below norm they ran (analytics-scoped roles only).
 
 ## Dashboard & analytics
 
@@ -80,6 +89,10 @@ All enforced in `backend/app/rules.py` + the routers, and covered by `backend/te
 
 ## Bonus — extras beyond the core requirements
 
+- **Smart heuristics on the data we already have** — three transparent (no-ML) helpers that turn stored
+  data into decisions: a **recommended dispatch assignment**, a **service-due** red-flag list, and
+  **fuel-efficiency anomaly** flags. Each is a plain rule you can explain, not a black box.
+- **Self-service password change** — issued users rotate their own password from Settings.
 - **Charts** — monthly-revenue and top-costliest-vehicle bar charts (Recharts), following real dataviz
   conventions.
 - **CSV & PDF export** — per-vehicle cost/ROI report downloadable in both formats.

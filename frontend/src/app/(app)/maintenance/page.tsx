@@ -10,7 +10,7 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { inr } from "@/lib/format";
-import type { Maintenance, Vehicle } from "@/lib/types";
+import type { Maintenance, ServiceDue, Vehicle } from "@/lib/types";
 import { DataTable, type Column } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -77,6 +77,8 @@ export default function MaintenancePage() {
         <p className="text-sm text-muted-foreground">Service logs and shop status</p>
       </div>
 
+      <ServiceDueCard />
+
       <div className="grid gap-5 lg:grid-cols-[340px_1fr]">
         {canWrite && <LogForm vehicles={dispatchable} onLogged={refresh} />}
 
@@ -91,6 +93,42 @@ export default function MaintenancePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ServiceDueCard() {
+  const { data: due = [] } = useQuery({
+    queryKey: ["service-due"], queryFn: () => api<ServiceDue[]>("/maintenance/due"),
+  });
+  if (due.length === 0) return null; // healthy fleet — nothing to flag
+
+  return (
+    <Card className="gap-3 p-4">
+      <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+        Service Due
+        <span className="rounded-full bg-signal-alert/12 px-2 py-0.5 text-xs font-medium text-signal-alert normal-case tracking-normal">
+          {due.length}
+        </span>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {due.map((d) => {
+          const overdue = d.state === "overdue";
+          return (
+            <div key={`${d.vehicle_id}-${d.service_type}`}
+              className="flex items-center justify-between gap-2 rounded-lg border p-3 text-sm">
+              <div className="min-w-0">
+                <div className="truncate font-medium">{d.vehicle_name}</div>
+                <div className="text-xs text-muted-foreground">{d.service_type}</div>
+              </div>
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                overdue ? "bg-signal-alert/12 text-signal-alert" : "bg-signal-shop/12 text-signal-shop"}`}>
+                {overdue ? `overdue ${Math.abs(d.days_left)}d` : `due in ${d.days_left}d`}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
   );
 }
 

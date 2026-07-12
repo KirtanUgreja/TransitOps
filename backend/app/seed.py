@@ -130,6 +130,11 @@ def seed(db: Session) -> None:
                        date=date.today() - timedelta(days=20), status="Completed"),
         MaintenanceLog(vehicle_id=v["MINI-03"].id, service_type="Tyre Replace", cost=6200,
                        date=date.today() - timedelta(days=1), status="Active"),
+        # Deliberately old services so the "Service Due" red-flag list has real rows to show.
+        MaintenanceLog(vehicle_id=v["TRK-12"].id, service_type="Oil Change", cost=2400,
+                       date=date.today() - timedelta(days=200), status="Completed"),   # overdue (90d)
+        MaintenanceLog(vehicle_id=v["TRUCK-07"].id, service_type="Oil Change", cost=2600,
+                       date=date.today() - timedelta(days=82), status="Completed"),    # due soon (8d)
     ])
 
     db.add_all([

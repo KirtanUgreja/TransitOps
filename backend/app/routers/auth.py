@@ -2,10 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..auth import create_token, get_current_user, verify_clerk_token, verify_password
+from ..auth import (
+    create_token, get_current_user, hash_password, verify_clerk_token, verify_password,
+)
 from ..db import get_db
 from ..models import User
-from ..schemas import ClerkLoginIn, LoginIn, LoginOut, UserOut
+from ..schemas import ClerkLoginIn, LoginIn, LoginOut, PasswordChangeIn, UserOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -46,6 +48,21 @@ def clerk_login(body: ClerkLoginIn, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
     return LoginOut(token=create_token(user), user=UserOut.model_validate(user))
+
+
+@router.post("/password", status_code=204)
+def change_password(
+    body: PasswordChangeIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Self-service password rotation for issued/demo users."""
+    if not user.password_hash:
+        raise HTTPException(400, "Clerk accounts change their password in Clerk, not here.")
+    if not verify_password(body.current_password, user.password_hash):
+        raise HTTPException(401, "Current password is incorrect")
+    user.password_hash = hash_password(body.new_password)
+    db.commit()
 
 
 @router.get("/me", response_model=UserOut)

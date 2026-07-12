@@ -1,16 +1,58 @@
 from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session, selectinload
 
 from ..db import get_db
-from ..models import Driver, DriverStatus, FuelLog, Trip, TripStatus, Vehicle, VehicleStatus
+from ..models import Driver, DriverStatus, FuelLog, MaintenanceLog, Trip, TripStatus, Vehicle, VehicleStatus
 from ..rbac import require
 from ..rules import validate_dispatch
 from ..schemas import TripCompleteIn, TripDispatchIn, TripIn, TripOut
 
 router = APIRouter(prefix="/trips", tags=["trips"])
+
+
+def _cost_per_km(db: Session) -> dict[int, float]:
+    """Vehicle_id → recent ₹/km = (fuel + maintenance cost) / completed planned distance.
+    Vehicles with no distance are omitted (can't fabricate a cost)."""
+    fuel = dict(db.execute(
+        select(FuelLog.vehicle_id, func.sum(FuelLog.cost)).group_by(FuelLog.vehicle_id)).all())
+    maint = dict(db.execute(
+        select(MaintenanceLog.vehicle_id, func.sum(MaintenanceLog.cost)).group_by(MaintenanceLog.vehicle_id)).all())
+    dist = dict(db.execute(
+        select(Trip.vehicle_id, func.sum(Trip.planned_distance_km))
+        .where(Trip.status == TripStatus.completed.value).group_by(Trip.vehicle_id)).all())
+    out: dict[int, float] = {}
+    for vid, km in dist.items():
+        if km:
+            out[vid] = (float(fuel.get(vid, 0)) + float(maint.get(vid, 0))) / float(km)
+    return out
+
+
+def _recommend(cargo: float, vehicles: list[Vehicle], drivers: list[Driver], db: Session) -> dict:
+    """Heuristic pick from the available pools. Smallest-fitting vehicle (tie: cheapest ₹/km),
+    highest-safety driver (tie: fewest trips). Returns nulls when nothing fits."""
+    cpk = _cost_per_km(db)
+    fitting = [v for v in vehicles if v.max_capacity_kg >= cargo] if cargo > 0 else list(vehicles)
+    vehicle = min(fitting, key=lambda v: (v.max_capacity_kg, cpk.get(v.id, float("inf")))) if fitting else None
+    driver = min(drivers, key=lambda d: (-d.safety_score, d.trips_completed)) if drivers else None
+
+    if not vehicle and not driver:
+        return {"vehicle_id": None, "driver_id": None, "reason": None}
+
+    parts = []
+    if vehicle:
+        parts.append(f"{vehicle.name} — fits {cargo:g} kg" if cargo > 0 else f"{vehicle.name}")
+        if vehicle.id in cpk:
+            parts.append(f"₹{cpk[vehicle.id]:.1f}/km")
+    if driver:
+        parts.append(f"{driver.name} (safety {driver.safety_score:g}%)")
+    return {
+        "vehicle_id": vehicle.id if vehicle else None,
+        "driver_id": driver.id if driver else None,
+        "reason": ", ".join(parts),
+    }
 
 
 def _out(trip: Trip) -> TripOut:
@@ -29,17 +71,17 @@ def list_trips(status: str | None = None, db: Session = Depends(get_db)):
 
 
 @router.get("/options", dependencies=[Depends(require("trips"))])
-def trip_options(db: Session = Depends(get_db)):
-    """Dispatch pools. Rule: Retired/In Shop/On Trip vehicles and non-Available or
-    expired-license drivers never appear here."""
-    vehicles = db.scalars(
+def trip_options(db: Session = Depends(get_db), cargo: float = 0):
+    """Dispatch pools + a recommended assignment for the given cargo weight. Rule:
+    Retired/In Shop/On Trip vehicles and non-Available or expired-license drivers never appear here."""
+    vehicles = list(db.scalars(
         select(Vehicle).where(Vehicle.status == VehicleStatus.available.value).order_by(Vehicle.name)
-    ).all()
-    drivers = db.scalars(
+    ).all())
+    drivers = list(db.scalars(
         select(Driver)
         .where(Driver.status == DriverStatus.available.value, Driver.license_expiry >= date.today())
         .order_by(Driver.name)
-    ).all()
+    ).all())
     return {
         "available_vehicles": [
             {"id": v.id, "name": v.name, "registration_no": v.registration_no,
@@ -50,6 +92,7 @@ def trip_options(db: Session = Depends(get_db)):
             {"id": d.id, "name": d.name, "license_no": d.license_no, "safety_score": d.safety_score}
             for d in drivers
         ],
+        "recommended": _recommend(cargo, vehicles, drivers, db),
     }
 
 

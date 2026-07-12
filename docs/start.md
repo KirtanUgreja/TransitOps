@@ -102,11 +102,14 @@ All passwords are `demo1234`. Each role sees a different slice of the app (enfor
 
 ## Run the tests
 
-The 10 mandatory business rules are covered by a test suite (no Docker needed — uses in-memory SQLite):
+The 10 mandatory business rules plus the smart-heuristic helpers (recommended dispatch, service-due,
+fuel anomalies) are covered by a test suite (no Docker needed — the rule tests use in-memory SQLite,
+the heuristic tests are pure functions):
 
 ```bash
 cd backend
-uv run pytest test_rules.py
+uv run pytest          # whole suite
+uv run pytest test_rules.py   # just the 10 mandatory rules
 ```
 
 ## Troubleshooting

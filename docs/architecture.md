@@ -44,6 +44,12 @@ design decisions:
 - **No migrations, on purpose.** For a fresh demo database, `create_all` plus an idempotent seed is
   simpler and faster than Alembic. The tradeoff is no schema evolution on a live DB — acceptable for
   a demo that always boots a fresh database.
+- **Decision helpers are pure functions over existing data.** The recommended-assignment
+  (`_recommend`), service-due (`_service_due`), and fuel-anomaly (`_fuel_anomalies`) helpers are plain,
+  side-effect-free functions that take rows and return ranked results — no ML, no new tables, no new
+  infra. Keeping them pure makes each unit-testable without the DB (`test_recommend.py`,
+  `test_service_due.py`, `test_fuel_anomaly.py`) and keeps the "why did it pick this?" answer a rule you
+  can read, not a model you can't.
 
 ## Frontend
 
@@ -100,5 +106,6 @@ and the Python seed remain the source of truth.
 
 ## Deferred work
 
-Scoped out of the 8-hour build: user-management edit/deactivate/reset (creation is done),
-license-expiry email reminders, vehicle document uploads, Alembic migrations, and httpOnly-cookie auth.
+Scoped out of the 8-hour build: user-management edit/deactivate/reset (creation + self-service
+password change are done), license-expiry email reminders, vehicle document uploads, Alembic
+migrations, and httpOnly-cookie auth. See `future.md` for the full list and how each would be added.
