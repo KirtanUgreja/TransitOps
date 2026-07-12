@@ -1,24 +1,59 @@
-# TransitOps
+<div align="center">
 
-**Smart transport operations, run from one control room.** Fleet, drivers, trip dispatch, maintenance,
-and costs — with every business rule enforced server-side and access scoped by role.
+# 🚦 TransitOps
 
-Built in an 8-hour hackathon.
+### Smart transport operations, run from one control room.
 
-## Documentation
+Fleet · Drivers · Trip Dispatch · Maintenance · Costs — with every business
+rule enforced server-side and access scoped by role.
 
-- **[Getting Started](docs/start.md)** — run it locally on macOS or Windows, with demo accounts.
-- **[Features](docs/features.md)** — what it does, plus the bonus extras.
-- **[Architecture](docs/architecture.md)** — how it's built, the tech stack, and why.
+<br/>
 
-## Demo
+![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=next.js&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Postgres](https://img.shields.io/badge/Postgres_16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
 
-📹 *Demo video coming soon — link will be added here.*
+<sub>Built in an 8-hour hackathon · 10 business rules · 4 roles · server-enforced RBAC</sub>
 
-## Team
+</div>
 
-| Contributor | GitHub |
+---
+
+<div align="center">
+
+|  |  |
 |---|---|
-| Kirtan Ugreja | [@KirtanUgreja](https://github.com/KirtanUgreja) |
-| Chaitya Vakani | [@chaityavakani](https://github.com/chaityavakani) |
-| Meet Rajani | [@Rajani-Meet](https://github.com/Rajani-Meet) |
+| 🎛️ **Live dispatch board** | Draft → Dispatched → Completed, with a real-time capacity check |
+| 🔒 **Role-based access** | Four roles, enforced on the backend and mirrored in the UI |
+| 📊 **Analytics & ROI** | Fuel efficiency, operational cost, per-vehicle ROI, CSV/PDF export |
+| ⚙️ **Rules as consequences** | Statuses flip automatically — dispatch, complete, maintenance |
+
+</div>
+
+## 📖 Documentation
+
+| Doc | What's inside |
+|---|---|
+| **[🚀 Getting Started](docs/start.md)** | Run it locally on macOS or Windows, with demo accounts |
+| **[✨ Features](docs/features.md)** | What it does, plus the bonus extras |
+| **[🏗️ Architecture](docs/architecture.md)** | How it's built, the tech stack, and why |
+
+## 🎬 Demo
+
+> 📹 **Demo video coming soon** — link will be added here.
+
+## 👥 Team
+
+<div align="center">
+
+| Kirtan Ugreja | Chaitya Vakani | Meet Rajani |
+|:---:|:---:|:---:|
+| [@KirtanUgreja](https://github.com/KirtanUgreja) | [@chaityavakani](https://github.com/chaityavakani) | [@Rajani-Meet](https://github.com/Rajani-Meet) |
+
+</div>
+
+<div align="center">
+<sub>TransitOps © 2026 · RBAC enabled</sub>
+</div>
