@@ -10,3 +10,10 @@ export const monthYear = (iso: string) => {
   const [y, m] = iso.split("-");
   return `${m}/${y}`;
 };
+
+// "2026-07" -> "Jul"
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+export const monthLabel = (ym: string) => {
+  const m = Number(ym.split("-")[1]);
+  return MONTHS[m - 1] ?? ym;
+};

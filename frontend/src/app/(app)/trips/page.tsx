@@ -57,7 +57,7 @@ export default function TripsPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Trip Dispatcher</h1>
+        <h1 className="font-heading text-3xl font-semibold tracking-tight">Trip Dispatcher</h1>
         <p className="text-sm text-muted-foreground">Draft, dispatch, complete, and cancel trips</p>
       </div>
 

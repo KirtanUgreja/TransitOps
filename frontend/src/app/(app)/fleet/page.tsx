@@ -91,7 +91,7 @@ export default function FleetPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Vehicle Registry</h1>
+          <h1 className="font-heading text-3xl font-semibold tracking-tight">Vehicle Registry</h1>
           <p className="text-sm text-muted-foreground">Register and manage the fleet</p>
         </div>
         {canWrite && (

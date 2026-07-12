@@ -1,26 +1,26 @@
 import { cn } from "@/lib/utils";
 
-// Signal-light semantics shared by vehicles, drivers, trips, maintenance.
+// Soft-filled signal pills — a tinted background + matching text, driven by the --signal-* tokens.
 const TONE: Record<string, string> = {
-  Available: "text-signal-available",
-  Completed: "text-signal-available",
-  "On Trip": "text-signal-ontrip",
-  Dispatched: "text-signal-ontrip",
-  "In Shop": "text-signal-shop",
-  Active: "text-signal-shop",
-  Draft: "text-signal-shop",
-  Suspended: "text-signal-alert",
-  Cancelled: "text-signal-alert",
-  Retired: "text-signal-retired",
-  "Off Duty": "text-signal-retired",
+  Available: "bg-signal-available/12 text-signal-available",
+  Completed: "bg-signal-available/12 text-signal-available",
+  "On Trip": "bg-signal-ontrip/12 text-signal-ontrip",
+  Dispatched: "bg-signal-ontrip/12 text-signal-ontrip",
+  "In Shop": "bg-signal-shop/15 text-signal-shop",
+  Active: "bg-signal-shop/15 text-signal-shop",
+  Draft: "bg-signal-shop/15 text-signal-shop",
+  Suspended: "bg-signal-alert/12 text-signal-alert",
+  Cancelled: "bg-signal-alert/12 text-signal-alert",
+  Retired: "bg-signal-retired/12 text-signal-retired",
+  "Off Duty": "bg-signal-retired/12 text-signal-retired",
 };
 
 export function StatusBadge({ status, className }: { status: string; className?: string }) {
-  const tone = TONE[status] ?? "text-muted-foreground";
+  const tone = TONE[status] ?? "bg-muted text-muted-foreground";
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap",
         tone,
         className,
       )}
@@ -31,12 +31,12 @@ export function StatusBadge({ status, className }: { status: string; className?:
   );
 }
 
-// Red outline tag for expired driver licenses.
+// Red soft pill for expired driver licenses.
 export function ExpiredTag({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded border border-signal-alert px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-signal-alert",
+        "inline-flex items-center rounded-full bg-signal-alert/12 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-signal-alert",
         className,
       )}
     >

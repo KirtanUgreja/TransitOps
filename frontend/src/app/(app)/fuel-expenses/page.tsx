@@ -68,7 +68,7 @@ export default function FuelExpensesPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Fuel &amp; Expenses</h1>
+          <h1 className="font-heading text-3xl font-semibold tracking-tight">Fuel &amp; Expenses</h1>
           <p className="text-sm text-muted-foreground">Fuel logs, tolls, and operational cost</p>
         </div>
         {canWrite && (

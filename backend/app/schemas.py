@@ -35,6 +35,7 @@ class UserCreatedOut(BaseModel):
     email: str
     role: str
     password: str  # plaintext, shown only at creation time
+    email_sent: bool = False
 
 
 class LoginOut(BaseModel):

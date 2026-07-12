@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from ..auth import hash_password
 from ..db import get_db
+from ..email import send_credentials_email
 from ..models import Role, User
 from ..rbac import require
 from ..schemas import UserCreatedOut, UserCreateIn, UserOut
@@ -14,6 +15,10 @@ from ..schemas import UserCreatedOut, UserCreateIn, UserOut
 router = APIRouter(prefix="/users", tags=["users"])
 
 VALID_ROLES = {r.value for r in Role}
+ROLE_LABELS = {
+    "fleet_manager": "Fleet Manager", "dispatcher": "Dispatcher",
+    "safety_officer": "Safety Officer", "financial_analyst": "Financial Analyst",
+}
 
 
 @router.get("", response_model=list[UserOut], dependencies=[Depends(require("settings"))])
@@ -36,5 +41,9 @@ def create_user(body: UserCreateIn, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(409, f"A user with email '{body.email}' already exists")
     db.refresh(user)
+    email_sent = send_credentials_email(
+        to=user.email, name=user.name,
+        role_label=ROLE_LABELS.get(user.role, user.role), password=password,
+    )
     return UserCreatedOut(id=user.id, name=user.name, email=user.email,
-                          role=user.role, password=password)
+                          role=user.role, password=password, email_sent=email_sent)

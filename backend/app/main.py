@@ -1,9 +1,19 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
 
-from .db import Base, engine, get_db
-from .routers import analytics, auth, drivers, fuel_expenses, maintenance, trips, users, vehicles
-from .seed import seed
+from dotenv import load_dotenv
+
+# Load backend env before any module reads os.environ (db, auth, email all do at import).
+# .env.local wins over .env, matching the frontend convention.
+_backend = Path(__file__).resolve().parent.parent
+load_dotenv(_backend / ".env")
+load_dotenv(_backend / ".env.local", override=True)
+
+from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+
+from .db import Base, engine, get_db  # noqa: E402
+from .routers import analytics, auth, drivers, fuel_expenses, maintenance, trips, users, vehicles  # noqa: E402
+from .seed import seed  # noqa: E402
 
 app = FastAPI(title="TransitOps")
 

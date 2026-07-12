@@ -42,8 +42,8 @@ design decisions:
   the other roles' accounts via `/users` (guarded by `require("settings", write=True)`), and the app
   generates a one-time password to hand over.
 - **No migrations, on purpose.** For a fresh demo database, `create_all` plus an idempotent seed is
-  simpler and faster than Alembic. The tradeoff (no schema evolution on a live DB) is documented in
-  `future.md` with the upgrade path.
+  simpler and faster than Alembic. The tradeoff is no schema evolution on a live DB — acceptable for
+  a demo that always boots a fresh database.
 
 ## Frontend
 
@@ -100,5 +100,5 @@ and the Python seed remain the source of truth.
 
 ## Deferred work
 
-Signup/user management, license-expiry email reminders, document uploads, Alembic migrations, and
-httpOnly-cookie auth are scoped out with upgrade notes in [`../future.md`](../future.md).
+Scoped out of the 8-hour build: user-management edit/deactivate/reset (creation is done),
+license-expiry email reminders, vehicle document uploads, Alembic migrations, and httpOnly-cookie auth.

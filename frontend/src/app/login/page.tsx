@@ -26,20 +26,24 @@ const SCOPE: Record<Role, string> = {
 };
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, user, ready } = useAuth();
   const router = useRouter();
-  const { isSignedIn } = useClerkAuth();
+  const { isLoaded: clerkLoaded, isSignedIn } = useClerkAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // If a Clerk session is already active, the app-guard (src/app/(app)/layout.tsx)
-  // owns the token→JWT bridge; just send the user into the app so it runs there.
+  // Only leave /login once we're genuinely ready to enter the app:
+  //  - an app session already exists (JWT login), OR
+  //  - Clerk has finished loading and reports a session (its own fallback redirect
+  //    also targets /dashboard; the (app) guard performs the token→JWT bridge there).
+  // Gating on clerkLoaded prevents the /login ↔ /dashboard ping-pong with the guard.
   useEffect(() => {
-    if (isSignedIn) router.replace("/dashboard");
-  }, [isSignedIn, router]);
-  const bridging = isSignedIn;
+    if (ready && user) { router.replace("/dashboard"); return; }
+    if (clerkLoaded && isSignedIn) router.replace("/dashboard");
+  }, [ready, user, clerkLoaded, isSignedIn, router]);
+  const bridging = clerkLoaded && isSignedIn;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,37 +66,46 @@ export default function LoginPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
-      {/* Brand / command panel */}
-      <aside className="hidden flex-col justify-between bg-sidebar p-12 text-sidebar-foreground lg:flex">
-        <div className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-lg bg-primary text-primary-foreground">
+      {/* Brand panel — deliberate dark panel with an amber wash, contrasts the white sign-in side. */}
+      <aside className="relative hidden flex-col justify-between overflow-hidden p-12 text-neutral-100 lg:flex
+        bg-[radial-gradient(120%_120%_at_0%_0%,#3a2a12_0%,#1c1917_45%,#0c0a09_100%)]">
+        <div
+          className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full opacity-40 blur-3xl"
+          style={{ background: "radial-gradient(circle,var(--primary),transparent 70%)" }}
+        />
+        <div className="relative flex items-center gap-3">
+          <span className="grid size-11 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg">
             <Bus className="size-5" />
           </span>
           <div>
-            <div className="text-lg font-semibold tracking-tight">TransitOps</div>
-            <div className="text-xs text-sidebar-foreground/60">Smart Transport Operations Platform</div>
+            <div className="font-heading text-xl font-semibold tracking-tight">TransitOps</div>
+            <div className="text-xs text-neutral-400">Smart Transport Operations Platform</div>
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="relative space-y-6">
           <div>
-            <div className="text-sm font-medium uppercase tracking-wider text-primary">One login, four roles</div>
-            <p className="mt-1 max-w-sm text-sm text-sidebar-foreground/60">
-              Access is scoped by role the moment you sign in — every screen and action is
-              enforced server-side.
+            <div className="text-xs font-medium uppercase tracking-[0.2em] text-primary">One login · four roles</div>
+            <p className="mt-3 max-w-sm font-heading text-2xl font-medium leading-snug text-neutral-100">
+              Run the whole fleet from one control room.
+            </p>
+            <p className="mt-2 max-w-sm text-sm text-neutral-400">
+              Access is scoped by role the moment you sign in — every screen and action enforced
+              server-side.
             </p>
           </div>
           <ul className="space-y-2">
             {DEMO.map((d) => (
-              <li key={d.role} className="flex items-baseline justify-between gap-4 rounded-md bg-sidebar-accent/40 px-3 py-2">
+              <li key={d.role}
+                className="flex items-baseline justify-between gap-4 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 py-2.5">
                 <span className="text-sm font-medium">{ROLE_LABELS[d.role]}</span>
-                <span className="text-xs text-sidebar-foreground/50">{SCOPE[d.role]}</span>
+                <span className="text-xs text-neutral-400">{SCOPE[d.role]}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="text-xs uppercase tracking-widest text-sidebar-foreground/40">
+        <div className="relative text-[11px] uppercase tracking-widest text-neutral-500">
           TransitOps © 2026 · RBAC enabled
         </div>
       </aside>
@@ -100,8 +113,8 @@ export default function LoginPage() {
       {/* Sign-in card */}
       <main className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
-          <h1 className="text-2xl font-semibold tracking-tight">Sign in to your account</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Enter your credentials to continue</p>
+          <h1 className="font-heading text-3xl font-semibold tracking-tight">Sign in to your account</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">Enter your credentials to continue</p>
 
           <form onSubmit={submit} className="mt-8 space-y-4">
             <div className="space-y-1.5">

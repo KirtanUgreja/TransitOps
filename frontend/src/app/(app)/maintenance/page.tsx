@@ -73,7 +73,7 @@ export default function MaintenancePage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Maintenance</h1>
+        <h1 className="font-heading text-3xl font-semibold tracking-tight">Maintenance</h1>
         <p className="text-sm text-muted-foreground">Service logs and shop status</p>
       </div>
 

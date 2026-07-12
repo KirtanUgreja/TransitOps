@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table";
 
 type UserRow = { id: number; name: string; email: string; role: Role };
-type CreatedUser = UserRow & { password: string };
+type CreatedUser = UserRow & { password: string; email_sent: boolean };
 const CREATABLE: Role[] = ["fleet_manager", "dispatcher", "safety_officer", "financial_analyst"];
 
 const SETTINGS_KEY = "transitops_settings";
@@ -58,7 +58,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings &amp; RBAC</h1>
+        <h1 className="font-heading text-3xl font-semibold tracking-tight">Settings &amp; RBAC</h1>
         <p className="text-sm text-muted-foreground">Depot configuration and access control</p>
       </div>
 
@@ -191,7 +191,12 @@ function UserManagement() {
               <Copy className="size-3" /> copy
             </button>
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground">Shown once — the password isn&apos;t stored in plain text.</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {created.email_sent
+              ? `✓ Credentials emailed to ${created.email}. `
+              : "Email not sent (Resend not configured) — share these manually. "}
+            Shown once — the password isn&apos;t stored in plain text.
+          </p>
         </div>
       )}
 
