@@ -4,10 +4,20 @@ What TransitOps does, by area. Every action is validated on the backend and scop
 
 ## Authentication & access control
 
-- JWT login for four seeded roles (Fleet Manager, Dispatcher, Safety Officer, Financial Analyst).
+Two ways in, one role model:
+
+- **Admin sign-in with Clerk** — the Fleet Manager signs up / signs in through Clerk. The backend
+  verifies the Clerk session token, provisions a Fleet Manager account in Postgres, and issues the
+  app's own JWT — so the rest of the app works identically no matter how you logged in.
+- **Issued-credential login** — other roles (Dispatcher, Safety Officer, Financial Analyst) log in
+  with an email and password. The Fleet Manager creates these accounts and hands over the generated
+  credentials.
+- **User management** (Settings, Fleet Manager only) — create a user with a role; the app generates a
+  one-time password to share. Lists all users.
 - **Role-based access control** enforced server-side and mirrored in the UI — each role sees only its
   screens, and write actions are hidden for view-only roles. A blocked request returns 403 even if the
   UI is bypassed.
+- Four demo accounts stay available for a quick tour (one per role, password `demo1234`).
 
 ## Vehicle registry
 

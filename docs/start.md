@@ -25,8 +25,8 @@ plain local run. To override, copy the example files:
 
 | Example | Copy to | Holds |
 |---|---|---|
-| `backend/.env.example` | `backend/.env` | `DATABASE_URL`, `JWT_SECRET` |
-| `frontend/.env.example` | `frontend/.env.local` | `NEXT_PUBLIC_API_URL` (the backend URL the browser calls) |
+| `backend/.env.example` | `backend/.env` | `DATABASE_URL`, `JWT_SECRET`, `CLERK_ISSUER` |
+| `frontend/.env.example` | `frontend/.env.local` | `NEXT_PUBLIC_API_URL`, Clerk keys |
 
 ```bash
 cp backend/.env.example backend/.env
@@ -34,6 +34,19 @@ cp frontend/.env.example frontend/.env.local
 ```
 
 The real `.env` / `.env.local` files are git-ignored; only the `.example` files are committed.
+
+### Clerk (admin sign-in) — optional
+
+The demo and issued-credential logins work with no Clerk setup. To enable the **Admin sign-in (Clerk)**
+button, add your own Clerk instance:
+
+1. Create an app at [dashboard.clerk.com](https://dashboard.clerk.com/) and run `clerk init` in
+   `frontend/` (it writes the publishable + secret keys into `frontend/.env.local`).
+2. Set `CLERK_ISSUER` in `backend/.env` to your Clerk Frontend API URL
+   (e.g. `https://<subdomain>.clerk.accounts.dev`) so the backend can verify Clerk tokens.
+
+A Clerk user is provisioned as a **Fleet Manager** on first sign-in; from Settings they create the
+other roles' accounts.
 
 ## Run it (three terminals)
 
