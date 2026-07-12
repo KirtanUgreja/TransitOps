@@ -1,0 +1,22 @@
+/.agent
+/.agents
+/.claude
+/docs-ig
+/skills-lock.json
+.DS_Store
+/CLAUDE.md
+/plans
+
+# frontend
+node_modules/
+.next/
+*.tsbuildinfo
+
+# backend
+.venv/
+__pycache__/
+*.pyc
+
+# env
+.env
+.env.local
