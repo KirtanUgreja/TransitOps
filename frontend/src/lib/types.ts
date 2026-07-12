@@ -114,6 +114,7 @@ export type Maintenance = {
 export type TripOptions = {
   available_vehicles: { id: number; name: string; registration_no: string; max_capacity_kg: number }[];
   available_drivers: { id: number; name: string; license_no: string; safety_score: number }[];
+  recommended: { vehicle_id: number | null; driver_id: number | null; reason: string | null };
 };
 
 export const VEHICLE_TYPES = ["Van", "Truck", "Mini"] as const;

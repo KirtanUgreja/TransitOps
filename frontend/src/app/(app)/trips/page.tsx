@@ -33,9 +33,6 @@ export default function TripsPage() {
   const [completing, setCompleting] = useState<Trip | null>(null);
 
   const { data: trips = [] } = useQuery({ queryKey: ["trips"], queryFn: () => api<Trip[]>("/trips") });
-  const { data: options } = useQuery({
-    queryKey: ["trip-options"], queryFn: () => api<TripOptions>("/trips/options"), enabled: canWrite,
-  });
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["trips"] });
@@ -62,7 +59,7 @@ export default function TripsPage() {
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
-        {canWrite && <CreateTrip options={options} onCreated={refresh} />}
+        {canWrite && <CreateTrip onCreated={refresh} />}
 
         <div className="space-y-3">
           {/* Lifecycle strip */}
@@ -136,7 +133,7 @@ const createSchema = z.object({
 });
 type CreateValues = z.input<typeof createSchema>;
 
-function CreateTrip({ options, onCreated }: { options?: TripOptions; onCreated: () => void }) {
+function CreateTrip({ onCreated }: { onCreated: () => void }) {
   const { register, handleSubmit, watch, formState: { errors } } = useForm<CreateValues>({
     resolver: zodResolver(createSchema),
     defaultValues: { source: "", destination: "", cargo_weight_kg: 0, planned_distance_km: 0 },
@@ -145,6 +142,24 @@ function CreateTrip({ options, onCreated }: { options?: TripOptions; onCreated: 
   const [driverId, setDriverId] = useState(NONE);
 
   const cargo = Number(watch("cargo_weight_kg")) || 0;
+
+  // Cargo-aware options: the recommendation depends on the weight, so refetch as it changes.
+  const { data: options } = useQuery({
+    queryKey: ["trip-options", cargo],
+    queryFn: () => api<TripOptions>(`/trips/options?cargo=${cargo}`),
+  });
+  const rec = options?.recommended;
+
+  // Whether the current selection already matches the recommendation (so we can hide "Apply").
+  const recApplied = rec != null
+    && vehicleId === (rec.vehicle_id != null ? String(rec.vehicle_id) : NONE)
+    && driverId === (rec.driver_id != null ? String(rec.driver_id) : NONE);
+  const applyRec = () => {
+    if (!rec) return;
+    setVehicleId(rec.vehicle_id != null ? String(rec.vehicle_id) : NONE);
+    setDriverId(rec.driver_id != null ? String(rec.driver_id) : NONE);
+  };
+
   const vehicle = options?.available_vehicles.find((v) => String(v.id) === vehicleId);
   const overCapacity = vehicle ? cargo > vehicle.max_capacity_kg : false;
   const over = vehicle ? cargo - vehicle.max_capacity_kg : 0;
@@ -210,6 +225,23 @@ function CreateTrip({ options, onCreated }: { options?: TripOptions; onCreated: 
         <Field label="Cargo Weight (kg)" error={errors.cargo_weight_kg?.message}>
           <Input type="number" {...register("cargo_weight_kg")} />
         </Field>
+
+        {/* Heuristic recommendation — smallest fitting vehicle + safest available driver */}
+        {rec?.reason && (
+          <div className="flex items-start justify-between gap-2 rounded-md border border-primary/20 bg-primary/5 p-3 text-xs">
+            <div>
+              <span className="font-medium">⚡ Recommended:</span> {rec.reason}
+            </div>
+            {recApplied ? (
+              <span className="shrink-0 text-signal-available">✓ applied</span>
+            ) : (
+              <button type="button" className="shrink-0 font-medium text-primary hover:underline"
+                onClick={applyRec}>
+                Apply
+              </button>
+            )}
+          </div>
+        )}
         <Field label="Planned Distance (km)" error={errors.planned_distance_km?.message}>
           <Input type="number" {...register("planned_distance_km")} />
         </Field>

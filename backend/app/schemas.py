@@ -38,6 +38,11 @@ class UserCreatedOut(BaseModel):
     email_sent: bool = False
 
 
+class PasswordChangeIn(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=8)
+
+
 class LoginOut(BaseModel):
     token: str
     user: UserOut
