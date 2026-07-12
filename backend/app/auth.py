@@ -33,17 +33,21 @@ def create_token(user: User) -> str:
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)
 
 
-def get_current_user(
-    creds: HTTPAuthorizationCredentials | None = Depends(bearer),
-    db: Session = Depends(get_db),
-) -> User:
-    if creds is None:
-        raise HTTPException(401, "Not authenticated")
+def user_from_token(token: str, db: Session) -> User:
     try:
-        payload = jwt.decode(creds.credentials, JWT_SECRET, algorithms=[JWT_ALGO])
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGO])
     except jwt.PyJWTError:
         raise HTTPException(401, "Invalid or expired token")
     user = db.get(User, int(payload["sub"]))
     if user is None:
         raise HTTPException(401, "User not found")
     return user
+
+
+def get_current_user(
+    creds: HTTPAuthorizationCredentials | None = Depends(bearer),
+    db: Session = Depends(get_db),
+) -> User:
+    if creds is None:
+        raise HTTPException(401, "Not authenticated")
+    return user_from_token(creds.credentials, db)
