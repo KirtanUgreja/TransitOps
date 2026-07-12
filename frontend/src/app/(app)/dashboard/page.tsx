@@ -30,8 +30,9 @@ const KPIS: { key: keyof DashboardKpis; label: string }[] = [
 function FilterSelect({ label, value, onChange, options }: {
   label: string; value: string; onChange: (v: string) => void; options: readonly string[];
 }) {
+  const items = { [ALL]: `${label}: All`, ...Object.fromEntries(options.map((o) => [o, o])) };
   return (
-    <Select value={value} onValueChange={(v) => onChange(v ?? ALL)}>
+    <Select items={items} value={value} onValueChange={(v) => onChange(v ?? ALL)}>
       <SelectTrigger className="w-[170px]">
         <SelectValue placeholder={label} />
       </SelectTrigger>
