@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -17,10 +18,15 @@ from .seed import seed  # noqa: E402
 
 app = FastAPI(title="TransitOps")
 
+# Production frontends (comma-separated), e.g. "https://transitops.example.com".
+# The regex below still covers local dev, so ALLOWED_ORIGINS is only needed in prod.
+_allowed = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    # Allow localhost and any LAN IP on the dev port, so the app works whether it's
-    # reached via localhost:3000 or the machine's network address (e.g. 192.168.x.x:3000).
+    # Exact production origins from env, plus (via regex) localhost / any LAN IP on the dev
+    # port — so the app works locally whether reached via localhost or the machine's IP.
+    allow_origins=_allowed,
     allow_origin_regex=r"http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):3000",
     allow_methods=["*"],
     allow_headers=["*"],

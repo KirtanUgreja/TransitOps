@@ -40,9 +40,11 @@ rule enforced server-side and access scoped by role.
 | **[🚀 Getting Started](docs/start.md)** | Run it locally on macOS or Windows, with demo accounts |
 | **[✨ Features](docs/features.md)** | What it does, plus the bonus extras |
 | **[🏗️ Architecture](docs/architecture.md)** | How it's built, the tech stack, and why |
+| **[☁️ Deployment](docs/deployment.md)** | Ship it live on Vercel + Render + Neon |
 
 ## 🎬 Demo
 
+> 🌐 **Live demo coming soon** — link will be added here.
 > 📹 **Demo video coming soon** — link will be added here.
 
 ## 👥 Team
