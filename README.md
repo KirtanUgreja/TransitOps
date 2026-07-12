@@ -29,6 +29,7 @@ rule enforced server-side and access scoped by role.
 | 🔒 **Role-based access** | Four roles, enforced on the backend and mirrored in the UI |
 | 📊 **Analytics & ROI** | Fuel efficiency, operational cost, per-vehicle ROI, CSV/PDF export |
 | ⚙️ **Rules as consequences** | Statuses flip automatically — dispatch, complete, maintenance |
+| 🧠 **Smart heuristics** | Recommended dispatch, service-due alerts, fuel-anomaly flags — from data you already have |
 
 </div>
 

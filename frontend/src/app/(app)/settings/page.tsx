@@ -62,8 +62,9 @@ export default function SettingsPage() {
         <p className="text-sm text-muted-foreground">Depot configuration and access control</p>
       </div>
 
+      {/* Row 1 — the two small forms, side by side and equal height */}
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card className="h-fit gap-4 p-4">
+        <Card className="gap-4 p-5">
           <div className="text-sm font-semibold uppercase tracking-wide">General</div>
           <div className="space-y-1.5">
             <Label>Depot Name</Label>
@@ -79,44 +80,46 @@ export default function SettingsPage() {
               <Input value="Kilometers" disabled />
             </div>
           </div>
-          <Button className="w-fit" onClick={save}>Save changes</Button>
+          <Button className="mt-auto w-fit" onClick={save}>Save changes</Button>
         </Card>
 
         <ChangePassword />
-
-        <Card className="gap-3 p-4">
-          <div className="text-sm font-semibold uppercase tracking-wide">Role-Based Access (RBAC)</div>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Role</TableHead>
-                  {RESOURCES.map((r) => <TableHead key={r} className="text-center text-xs">{RES_LABELS[r]}</TableHead>)}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(Object.keys(MATRIX) as Role[]).map((role) => (
-                  <TableRow key={role}>
-                    <TableCell className="font-medium whitespace-nowrap">{ROLE_LABELS[role]}</TableCell>
-                    {RESOURCES.map((res) => {
-                      const a = MATRIX[role][res];
-                      return (
-                        <TableCell key={res} className="text-center">
-                          {a === "full" ? <span className="text-signal-available">✓</span>
-                            : a === "view" ? <span className="text-xs text-muted-foreground">view</span>
-                            : <span className="text-muted-foreground/40">–</span>}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <p className="text-xs text-muted-foreground">✓ full · view read-only · – no access. Enforced server-side.</p>
-        </Card>
       </div>
 
+      {/* Row 2 — the wide RBAC table, full width */}
+      <Card className="gap-3 p-5">
+        <div className="text-sm font-semibold uppercase tracking-wide">Role-Based Access (RBAC)</div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Role</TableHead>
+                {RESOURCES.map((r) => <TableHead key={r} className="text-center text-xs">{RES_LABELS[r]}</TableHead>)}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(Object.keys(MATRIX) as Role[]).map((role) => (
+                <TableRow key={role}>
+                  <TableCell className="font-medium whitespace-nowrap">{ROLE_LABELS[role]}</TableCell>
+                  {RESOURCES.map((res) => {
+                    const a = MATRIX[role][res];
+                    return (
+                      <TableCell key={res} className="text-center">
+                        {a === "full" ? <span className="text-signal-available">✓</span>
+                          : a === "view" ? <span className="text-xs text-muted-foreground">view</span>
+                          : <span className="text-muted-foreground/40">–</span>}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <p className="text-xs text-muted-foreground">✓ full · view read-only · – no access. Enforced server-side.</p>
+      </Card>
+
+      {/* Row 3 — user management, full width */}
       <UserManagement />
     </div>
   );
@@ -143,7 +146,7 @@ function ChangePassword() {
   const canSubmit = current && next.length >= 8 && next === confirm && !change.isPending;
 
   return (
-    <Card className="h-fit gap-4 p-4">
+    <Card className="gap-4 p-5">
       <div className="text-sm font-semibold uppercase tracking-wide">Change Password</div>
       <p className="text-xs text-muted-foreground">
         Rotate the password you sign in with. Clerk (admin) accounts change it in Clerk.
@@ -196,7 +199,7 @@ function UserManagement() {
   });
 
   return (
-    <Card className="gap-4 p-4">
+    <Card className="gap-4 p-5">
       <div className="text-sm font-semibold uppercase tracking-wide">User Management</div>
       <p className="text-xs text-muted-foreground">
         Create accounts for other roles. A password is generated once — copy it and hand it to the

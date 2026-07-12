@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session, selectinload
@@ -8,6 +10,43 @@ from ..rbac import require
 from ..schemas import MaintenanceIn, MaintenanceOut
 
 router = APIRouter(prefix="/maintenance", tags=["maintenance"])
+
+# Routine service intervals in days, keyed by service_type. Days (not km) because
+# MaintenanceLog stores the service date, not the odometer-at-service.
+SERVICE_INTERVAL_DAYS = {"Oil Change": 90, "Tyre Replace": 365, "Engine Repair": 365}
+DEFAULT_INTERVAL_DAYS = 180
+DUE_SOON_WINDOW = 14
+
+
+def _service_due(logs: list[MaintenanceLog], today: date) -> list[dict]:
+    """Red-flag list: for each (vehicle, service_type) with history, is the next service
+    due soon or overdue? Predicts only on service types a vehicle has actually had."""
+    last: dict[tuple[int, str], MaintenanceLog] = {}
+    for log in logs:
+        key = (log.vehicle_id, log.service_type)
+        if key not in last or log.date > last[key].date:
+            last[key] = log
+
+    rows = []
+    for (vehicle_id, service_type), log in last.items():
+        interval = SERVICE_INTERVAL_DAYS.get(service_type, DEFAULT_INTERVAL_DAYS)
+        due_date = log.date + timedelta(days=interval)
+        days_left = (due_date - today).days
+        if days_left < 0:
+            state = "overdue"
+        elif days_left <= DUE_SOON_WINDOW:
+            state = "due_soon"
+        else:
+            continue
+        rows.append({
+            "vehicle_id": vehicle_id,
+            "vehicle_name": log.vehicle.name if log.vehicle else None,
+            "service_type": service_type,
+            "last_date": log.date, "due_date": due_date,
+            "days_left": days_left, "state": state,
+        })
+    rows.sort(key=lambda r: r["days_left"])  # overdue (most negative) first
+    return rows
 
 
 def _out(log: MaintenanceLog) -> MaintenanceOut:
@@ -20,6 +59,16 @@ def _out(log: MaintenanceLog) -> MaintenanceOut:
 def list_maintenance(db: Session = Depends(get_db)):
     stmt = select(MaintenanceLog).options(selectinload(MaintenanceLog.vehicle)).order_by(desc(MaintenanceLog.id))
     return [_out(m) for m in db.scalars(stmt).all()]
+
+
+@router.get("/due", dependencies=[Depends(require("maintenance"))])
+def service_due(db: Session = Depends(get_db)):
+    """Vehicles whose next routine service is due soon or overdue (non-retired only)."""
+    logs = db.scalars(
+        select(MaintenanceLog).options(selectinload(MaintenanceLog.vehicle))
+        .join(Vehicle).where(Vehicle.status != VehicleStatus.retired.value)
+    ).all()
+    return _service_due(list(logs), date.today())
 
 
 @router.post("", response_model=MaintenanceOut, status_code=201,

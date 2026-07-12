@@ -11,7 +11,7 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { inr } from "@/lib/format";
-import type { CostsSummary, Expense, FuelLog, Vehicle } from "@/lib/types";
+import type { CostsSummary, Expense, FuelAnomaly, FuelLog, Vehicle } from "@/lib/types";
 import { DataTable, type Column } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -79,6 +79,8 @@ export default function FuelExpensesPage() {
         )}
       </div>
 
+      {can(user?.role, "analytics") && <FuelAnomaliesCard />}
+
       <div className="grid gap-5 lg:grid-cols-2">
         <Card className="gap-3 p-4">
           <div className="text-sm font-semibold uppercase tracking-wide">Fuel Logs</div>
@@ -119,6 +121,43 @@ const fuelSchema = z.object({
   date: z.string().min(1, "Required"),
 });
 type FuelValues = z.input<typeof fuelSchema>;
+
+function FuelAnomaliesCard() {
+  const { data: anomalies = [] } = useQuery({
+    queryKey: ["fuel-anomalies"], queryFn: () => api<FuelAnomaly[]>("/analytics/fuel-anomalies"),
+  });
+  if (anomalies.length === 0) return null; // no outliers to flag
+
+  return (
+    <Card className="gap-3 p-4">
+      <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+        Fuel Anomalies
+        <span className="rounded-full bg-signal-alert/12 px-2 py-0.5 text-xs font-medium text-signal-alert normal-case tracking-normal">
+          {anomalies.length}
+        </span>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Completed trips burning notably more fuel per km than the vehicle&apos;s own median.
+      </p>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {anomalies.map((a) => (
+          <div key={a.trip_code}
+            className="flex items-center justify-between gap-2 rounded-lg border p-3 text-sm">
+            <div className="min-w-0">
+              <div className="truncate font-medium">{a.trip_code} · {a.vehicle_name}</div>
+              <div className="text-xs text-muted-foreground">
+                {a.efficiency_km_l} km/L vs {a.baseline_km_l} norm
+              </div>
+            </div>
+            <span className="shrink-0 rounded-full bg-signal-alert/12 px-2 py-0.5 text-xs font-medium text-signal-alert">
+              ⚠ {a.pct_below}% below
+            </span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
 
 function FuelDialog({ vehicles, onClose, onSaved }: { vehicles: Vehicle[]; onClose: () => void; onSaved: () => void }) {
   const today = new Date().toISOString().slice(0, 10);

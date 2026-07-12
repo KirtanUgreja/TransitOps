@@ -2,6 +2,7 @@ import csv
 import io
 from collections import defaultdict
 from datetime import date, datetime
+from statistics import median
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -99,6 +100,48 @@ def _per_vehicle(db: Session) -> list[dict]:
             "revenue": rev, "roi_pct": round(roi, 1),
         })
     return rows
+
+
+ANOMALY_TOLERANCE = 0.15  # flag trips > 15% worse (lower km/L) than the vehicle's own baseline
+
+
+def _fuel_anomalies(trips: list) -> list[dict]:
+    """Completed trips burning notably more fuel/km than their vehicle's median. A vehicle
+    needs >= 2 completed trips to form a baseline (no anomaly against a sample of one)."""
+    by_vehicle: dict[int, list] = defaultdict(list)
+    for t in trips:
+        if t.status == COMPLETED and t.fuel_consumed_l and t.planned_distance_km:
+            by_vehicle[t.vehicle_id].append(t)
+
+    rows = []
+    for group in by_vehicle.values():
+        if len(group) < 2:
+            continue
+        effs = {t.id: t.planned_distance_km / t.fuel_consumed_l for t in group}
+        baseline = median(effs.values())
+        if baseline <= 0:
+            continue
+        for t in group:
+            eff = effs[t.id]
+            if eff < baseline * (1 - ANOMALY_TOLERANCE):
+                rows.append({
+                    "trip_code": f"TR{t.id:03d}",
+                    "vehicle_name": t.vehicle.name if t.vehicle else None,
+                    "efficiency_km_l": round(eff, 2),
+                    "baseline_km_l": round(baseline, 2),
+                    "pct_below": round((1 - eff / baseline) * 100, 1),
+                    "completed_at": t.completed_at,
+                })
+    rows.sort(key=lambda r: r["pct_below"], reverse=True)  # worst first
+    return rows
+
+
+@router.get("/analytics/fuel-anomalies", dependencies=[Depends(require("analytics"))])
+def fuel_anomalies(db: Session = Depends(get_db)):
+    trips = db.scalars(
+        select(Trip).options(selectinload(Trip.vehicle)).where(Trip.status == COMPLETED)
+    ).all()
+    return _fuel_anomalies(list(trips))
 
 
 @router.get("/analytics/summary", dependencies=[Depends(require("analytics"))])

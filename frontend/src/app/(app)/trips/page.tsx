@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import {
+  ArrowRight, Ban, CheckCircle2, MapPin, Navigation, Package, Route, Send, Truck,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -52,68 +55,63 @@ export default function TripsPage() {
   const board = trips.filter((t) => t.status === tab);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
         <h1 className="font-heading text-3xl font-semibold tracking-tight">Trip Dispatcher</h1>
         <p className="text-sm text-muted-foreground">Draft, dispatch, complete, and cancel trips</p>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
+      {/* Lifecycle summary — big, clickable stage pills that double as the filter tabs */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {LIFECYCLE.map((s) => {
+          const n = trips.filter((t) => t.status === s).length;
+          const active = tab === s;
+          return (
+            <button key={s} onClick={() => setTab(s)}
+              className={`group flex flex-col items-start gap-1 rounded-xl border p-4 text-left transition-all ${
+                active
+                  ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                  : "hover:border-primary/40 hover:bg-accent/50"}`}>
+              <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <StageDot status={s} /> {s}
+              </span>
+              <span className={`font-heading text-3xl font-semibold tabular-nums ${active ? "text-primary" : ""}`}>{n}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className={`grid gap-6 ${canWrite ? "lg:grid-cols-[380px_1fr]" : ""}`}>
         {canWrite && <CreateTrip onCreated={refresh} />}
 
+        {/* Live board */}
         <div className="space-y-3">
-          {/* Lifecycle strip */}
-          <div className="flex gap-1 rounded-lg border p-1">
-            {LIFECYCLE.map((s) => {
-              const n = trips.filter((t) => t.status === s).length;
-              return (
-                <button key={s} onClick={() => setTab(s)}
-                  className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    tab === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>
-                  {s} <span className="tabular-nums opacity-70">{n}</span>
-                </button>
-              );
-            })}
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+              <StageDot status={tab} /> {tab} trips
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
+                {board.length}
+              </span>
+            </h2>
           </div>
 
-          {/* Live board */}
-          <div className="space-y-2">
-            {board.length === 0 && (
-              <div className="grid h-32 place-items-center rounded-lg border border-dashed text-sm text-muted-foreground">
-                No {tab.toLowerCase()} trips.
+          {board.length === 0 ? (
+            <div className="grid h-40 place-items-center rounded-xl border border-dashed text-center">
+              <div className="space-y-1">
+                <Route className="mx-auto size-6 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">No {tab.toLowerCase()} trips.</p>
               </div>
-            )}
-            {board.map((t) => (
-              <Card key={t.id} className="flex-row items-center justify-between gap-4 p-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-muted-foreground">{t.code}</span>
-                    <StatusBadge status={t.status} />
-                  </div>
-                  <div className="mt-0.5 truncate text-sm font-medium">{t.source} → {t.destination}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {t.vehicle_name && t.driver_name ? `${t.vehicle_name} / ${t.driver_name}` : "Unassigned"}
-                    {" · "}{t.cargo_weight_kg.toLocaleString("en-IN")} kg · {t.planned_distance_km} km
-                  </div>
-                </div>
-                {canWrite && (
-                  <div className="flex shrink-0 gap-1">
-                    {t.status === "Draft" && (
-                      <Button size="sm" disabled={act.isPending}
-                        onClick={() => act.mutate({ id: t.id, action: "dispatch" })}>Dispatch</Button>
-                    )}
-                    {t.status === "Dispatched" && (
-                      <Button size="sm" onClick={() => setCompleting(t)}>Complete</Button>
-                    )}
-                    {(t.status === "Draft" || t.status === "Dispatched") && (
-                      <Button size="sm" variant="ghost" className="text-signal-alert" disabled={act.isPending}
-                        onClick={() => act.mutate({ id: t.id, action: "cancel" })}>Cancel</Button>
-                    )}
-                  </div>
-                )}
-              </Card>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className={`grid gap-3 ${canWrite ? "" : "sm:grid-cols-2 xl:grid-cols-3"}`}>
+              {board.map((t) => (
+                <TripCard key={t.id} trip={t} canWrite={canWrite} pending={act.isPending}
+                  onDispatch={() => act.mutate({ id: t.id, action: "dispatch" })}
+                  onCancel={() => act.mutate({ id: t.id, action: "cancel" })}
+                  onComplete={() => setCompleting(t)} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -122,6 +120,70 @@ export default function TripsPage() {
           onDone={() => { setCompleting(null); refresh(); }} />
       )}
     </div>
+  );
+}
+
+// A small colored dot per lifecycle stage, reusing the status tokens.
+function StageDot({ status }: { status: string }) {
+  const tone = status === "Completed" ? "bg-signal-available"
+    : status === "Dispatched" ? "bg-signal-ontrip"
+    : status === "Cancelled" ? "bg-signal-alert"
+    : "bg-signal-shop"; // Draft
+  return <span className={`inline-block size-2 rounded-full ${tone}`} />;
+}
+
+function TripCard({ trip: t, canWrite, pending, onDispatch, onCancel, onComplete }: {
+  trip: Trip; canWrite: boolean; pending: boolean;
+  onDispatch: () => void; onCancel: () => void; onComplete: () => void;
+}) {
+  return (
+    <Card className="gap-3 p-4 transition-shadow hover:shadow-md">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono text-xs text-muted-foreground">{t.code}</span>
+        <StatusBadge status={t.status} />
+      </div>
+
+      {/* Route */}
+      <div className="flex items-center gap-2 text-sm font-medium">
+        <MapPin className="size-4 shrink-0 text-muted-foreground" />
+        <span className="min-w-0 truncate">{t.source}</span>
+        <ArrowRight className="size-4 shrink-0 text-primary" />
+        <span className="min-w-0 truncate">{t.destination}</span>
+      </div>
+
+      {/* Meta */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1">
+          <Truck className="size-3.5" />
+          {t.vehicle_name && t.driver_name ? `${t.vehicle_name} · ${t.driver_name}` : "Unassigned"}
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <Package className="size-3.5" /> {t.cargo_weight_kg.toLocaleString("en-IN")} kg
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <Navigation className="size-3.5" /> {t.planned_distance_km} km
+        </span>
+      </div>
+
+      {canWrite && (t.status === "Draft" || t.status === "Dispatched") && (
+        <div className="flex gap-2 border-t pt-3">
+          {t.status === "Draft" && (
+            <Button size="sm" className="flex-1" disabled={pending} onClick={onDispatch}>
+              <Send className="size-3.5" /> Dispatch
+            </Button>
+          )}
+          {t.status === "Dispatched" && (
+            <Button size="sm" className="flex-1" onClick={onComplete}>
+              <CheckCircle2 className="size-3.5" /> Complete
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" className="text-signal-alert hover:text-signal-alert"
+            disabled={pending} onClick={onCancel}>
+            <Ban className="size-3.5" /> Cancel
+          </Button>
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -188,7 +250,7 @@ function CreateTrip({ onCreated }: { onCreated: () => void }) {
   const canDispatch = !!vehicle && driverId !== NONE && !overCapacity;
 
   return (
-    <Card className="h-fit gap-4 p-4">
+    <Card className="h-fit gap-4 p-5">
       <div className="text-sm font-semibold uppercase tracking-wide">Create Trip</div>
       <form className="space-y-3" onSubmit={handleSubmit(() => {})}>
         <Field label="Source" error={errors.source?.message}><Input {...register("source")} /></Field>
