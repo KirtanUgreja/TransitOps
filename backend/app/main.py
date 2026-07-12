@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .db import Base, engine, get_db
-from .routers import auth, drivers, maintenance, trips, vehicles
+from .routers import auth, drivers, fuel_expenses, maintenance, trips, vehicles
 from .seed import seed
 
 app = FastAPI(title="TransitOps")
@@ -30,5 +30,5 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-for r in (auth, vehicles, drivers, trips, maintenance):
+for r in (auth, vehicles, drivers, trips, maintenance, fuel_expenses):
     app.include_router(r.router)
