@@ -33,6 +33,14 @@ design decisions:
 - **RBAC as data, not scattered checks.** A single matrix maps each of the four roles to each resource
   (`full` / `view` / none). One dependency, `require(resource, write=?)`, reads that matrix and returns
   403 when access is denied. Adding a role or changing a permission is a one-line edit in one place.
+- **Two front doors, one role model.** Clerk (the admin/Fleet Manager) and issued email/password
+  credentials (everyone else) are two ways to authenticate, but both converge on the same thing: a
+  Postgres user with a role and an app-issued JWT. Clerk owns *identity*; the backend still owns the
+  *role*. `/auth/clerk` verifies the Clerk session token against Clerk's JWKS, finds-or-creates the
+  user as a Fleet Manager, and returns the normal app JWT — so from that point on, every RBAC check
+  and business rule behaves identically regardless of how the user signed in. The Fleet Manager creates
+  the other roles' accounts via `/users` (guarded by `require("settings", write=True)`), and the app
+  generates a one-time password to hand over.
 - **No migrations, on purpose.** For a fresh demo database, `create_all` plus an idempotent seed is
   simpler and faster than Alembic. The tradeoff (no schema evolution on a live DB) is documented in
   `future.md` with the upgrade path.
@@ -70,7 +78,8 @@ and the Python seed remain the source of truth.
 | Charts | **Recharts** | Composable React charts; enough control to follow real dataviz conventions without a heavy viz toolkit. |
 | Backend framework | **FastAPI** | Type-hinted request/response models, automatic validation, and OpenAPI docs out of the box. |
 | ORM | **SQLAlchemy 2.0** | Mature, explicit, typed models; full control over the transactions the status-flip rules depend on. |
-| Auth | **JWT (PyJWT) + bcrypt** | Stateless tokens fit a demo with seeded users; bcrypt for password hashing. |
+| App auth | **JWT (PyJWT) + bcrypt** | Stateless app tokens carry the user's role; bcrypt hashes issued passwords. RS256 verification (via `cryptography`) validates Clerk tokens. |
+| Admin identity | **Clerk** | Hosted sign-in/sign-up for the admin, verified server-side against Clerk's JWKS and bridged to the app's own JWT — identity managed for us, roles kept in our DB. |
 | Database | **Postgres 16** | A real relational database with the constraints (unique registration number) some rules lean on. |
 | Python tooling | **uv** | One fast tool for the virtualenv, dependencies, and running — no separate pip/venv dance. |
 | Dev database | **Docker Compose** | Postgres in one command on any machine, with a persistent volume and a health check. |

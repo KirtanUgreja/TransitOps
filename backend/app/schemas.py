@@ -8,12 +8,33 @@ class LoginIn(BaseModel):
     password: str
 
 
+class ClerkLoginIn(BaseModel):
+    token: str
+    email: str | None = None
+    name: str | None = None
+
+
 class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     name: str
     email: str
     role: str
+
+
+class UserCreateIn(BaseModel):
+    name: str = Field(min_length=1)
+    email: str = Field(min_length=3)
+    role: str  # one of the four RBAC roles
+
+
+class UserCreatedOut(BaseModel):
+    """Returned once, to the Fleet Manager, so they can hand over the credentials."""
+    id: int
+    name: str
+    email: str
+    role: str
+    password: str  # plaintext, shown only at creation time
 
 
 class LoginOut(BaseModel):

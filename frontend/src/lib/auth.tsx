@@ -10,6 +10,7 @@ type AuthCtx = {
   user: User | null;
   ready: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithClerk: (token: string, email?: string, name?: string) => Promise<User>;
   logout: () => void;
 };
 
@@ -38,6 +39,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(res.user);
   }
 
+  // Bridge a Clerk session into an app user + JWT (Clerk = admin/Fleet Manager identity).
+  async function loginWithClerk(token: string, email?: string, name?: string) {
+    const res = await api<{ token: string; user: User }>("/auth/clerk", {
+      method: "POST",
+      body: JSON.stringify({ token, email, name }),
+    });
+    setToken(res.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+    setUser(res.user);
+    return res.user;
+  }
+
   function logout() {
     setToken(null);
     localStorage.removeItem(USER_KEY);
@@ -45,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = "/login";
   }
 
-  return <Ctx.Provider value={{ user, ready, login, logout }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ user, ready, login, loginWithClerk, logout }}>{children}</Ctx.Provider>;
 }
 
 export function useAuth() {

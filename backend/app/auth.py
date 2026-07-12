@@ -15,6 +15,23 @@ JWT_ALGO = "HS256"
 
 bearer = HTTPBearer(auto_error=False)
 
+# Clerk: verify session tokens against the instance JWKS.
+CLERK_ISSUER = os.environ.get("CLERK_ISSUER", "https://sunny-terrapin-30.clerk.accounts.dev")
+_clerk_jwks = jwt.PyJWKClient(f"{CLERK_ISSUER}/.well-known/jwks.json")
+
+
+def verify_clerk_token(token: str) -> dict:
+    """Verify a Clerk session JWT and return its claims (sub = Clerk user id)."""
+    try:
+        key = _clerk_jwks.get_signing_key_from_jwt(token).key
+        return jwt.decode(
+            token, key, algorithms=["RS256"], issuer=CLERK_ISSUER,
+            leeway=10,  # tolerate small clock skew on short-lived session tokens
+            options={"verify_aud": False},  # Clerk session tokens have no fixed audience
+        )
+    except jwt.PyJWTError as e:
+        raise HTTPException(401, f"Invalid Clerk token: {e}")
+
 
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()

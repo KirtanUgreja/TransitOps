@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Copy, UserPlus } from "lucide-react";
+import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { can, MATRIX, ROLE_LABELS, type Resource, type Role } from "@/lib/rbac";
 import { Button } from "@/components/ui/button";
@@ -9,8 +12,15 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+
+type UserRow = { id: number; name: string; email: string; role: Role };
+type CreatedUser = UserRow & { password: string };
+const CREATABLE: Role[] = ["fleet_manager", "dispatcher", "safety_officer", "financial_analyst"];
 
 const SETTINGS_KEY = "transitops_settings";
 const RESOURCES: Resource[] = [
@@ -104,6 +114,105 @@ export default function SettingsPage() {
           <p className="text-xs text-muted-foreground">✓ full · view read-only · – no access. Enforced server-side.</p>
         </Card>
       </div>
+
+      <UserManagement />
     </div>
+  );
+}
+
+function UserManagement() {
+  const qc = useQueryClient();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<Role>("dispatcher");
+  const [created, setCreated] = useState<CreatedUser | null>(null);
+
+  const { data: users = [] } = useQuery({
+    queryKey: ["users"], queryFn: () => api<UserRow[]>("/users"),
+  });
+
+  const createUser = useMutation({
+    mutationFn: () => api<CreatedUser>("/users", {
+      method: "POST", body: JSON.stringify({ name, email, role }),
+    }),
+    onSuccess: (u) => {
+      setCreated(u);
+      setName(""); setEmail("");
+      qc.invalidateQueries({ queryKey: ["users"] });
+      toast.success(`User created — share the credentials with ${u.name}`);
+    },
+    onError: (e: ApiError) => toast.error(e.detail),
+  });
+
+  return (
+    <Card className="gap-4 p-4">
+      <div className="text-sm font-semibold uppercase tracking-wide">User Management</div>
+      <p className="text-xs text-muted-foreground">
+        Create accounts for other roles. A password is generated once — copy it and hand it to the
+        user; they sign in with the issued credentials.
+      </p>
+
+      <form className="grid gap-3 sm:grid-cols-[1fr_1fr_160px_auto] sm:items-end"
+        onSubmit={(e) => { e.preventDefault(); createUser.mutate(); }}>
+        <div className="space-y-1.5">
+          <Label>Name</Label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} required />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Email</Label>
+          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Role</Label>
+          <Select items={Object.fromEntries(CREATABLE.map((r) => [r, ROLE_LABELS[r]]))}
+            value={role} onValueChange={(v) => v && setRole(v as Role)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {CREATABLE.map((r) => <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button type="submit" disabled={createUser.isPending}>
+          <UserPlus className="size-4" /> Create
+        </Button>
+      </form>
+
+      {created && (
+        <div className="rounded-md border border-primary/40 bg-primary/5 p-3 text-sm">
+          <div className="mb-1 font-medium">Credentials for {created.name} ({ROLE_LABELS[created.role]})</div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs">
+            <span>email: {created.email}</span>
+            <span>password: {created.password}</span>
+            <button type="button" className="inline-flex items-center gap-1 text-primary hover:underline"
+              onClick={() => {
+                navigator.clipboard.writeText(`email: ${created.email}\npassword: ${created.password}`);
+                toast.success("Copied");
+              }}>
+              <Copy className="size-3" /> copy
+            </button>
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">Shown once — the password isn&apos;t stored in plain text.</p>
+        </div>
+      )}
+
+      <div className="overflow-x-auto rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Role</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.map((u) => (
+              <TableRow key={u.id}>
+                <TableCell className="font-medium">{u.name}</TableCell>
+                <TableCell className="text-muted-foreground">{u.email}</TableCell>
+                <TableCell>{ROLE_LABELS[u.role]}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </Card>
   );
 }

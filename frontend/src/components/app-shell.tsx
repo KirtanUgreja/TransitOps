@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Truck, Users, Route, Wrench,
   Fuel, BarChart3, Settings, Bus, Search, LogOut, Menu,
 } from "lucide-react";
+import { useAuth as useClerkAuth } from "@clerk/nextjs";
 import { useAuth } from "@/lib/auth";
 import { can, ROLE_LABELS, type Resource } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
@@ -70,6 +71,13 @@ function Brand() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
+  const { signOut, isSignedIn } = useClerkAuth();
+
+  async function handleLogout() {
+    if (isSignedIn) await signOut();  // clear Clerk session for admin users
+    logout();                          // clear app JWT + redirect
+  }
+
   if (!user) return null;
 
   return (
@@ -117,7 +125,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </span>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={logout}>
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="size-4" /> Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>

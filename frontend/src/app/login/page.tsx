@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bus } from "lucide-react";
+import { Bus, ShieldCheck } from "lucide-react";
+import { SignInButton, SignUpButton, useAuth as useClerkAuth } from "@clerk/nextjs";
 import { useAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
 import { ROLE_LABELS, type Role } from "@/lib/rbac";
@@ -27,10 +28,18 @@ const SCOPE: Record<Role, string> = {
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
+  const { isSignedIn } = useClerkAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // If a Clerk session is already active, the app-guard (src/app/(app)/layout.tsx)
+  // owns the token→JWT bridge; just send the user into the app so it runs there.
+  useEffect(() => {
+    if (isSignedIn) router.replace("/dashboard");
+  }, [isSignedIn, router]);
+  const bridging = isSignedIn;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -110,10 +119,31 @@ export default function LoginPage() {
               <p className="text-sm font-medium text-destructive">❌ {error}</p>
             )}
 
-            <Button type="submit" className="w-full" disabled={busy}>
+            <Button type="submit" className="w-full" disabled={busy || bridging}>
               {busy ? "Signing in…" : "Sign In"}
             </Button>
           </form>
+
+          {/* Admin sign-in via Clerk — the Fleet Manager's direct login / sign-up. */}
+          <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
+          </div>
+          <div className="space-y-2">
+            <SignInButton mode="modal">
+              <Button variant="outline" className="w-full" disabled={bridging}>
+                <ShieldCheck className="size-4" />
+                {bridging ? "Entering…" : "Admin sign-in (Clerk)"}
+              </Button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button type="button" className="w-full text-center text-xs text-muted-foreground hover:text-foreground">
+                New admin? Create an account
+              </button>
+            </SignUpButton>
+            <p className="text-center text-[11px] text-muted-foreground">
+              Admins sign in with Clerk and manage users. Other roles use the issued credentials above.
+            </p>
+          </div>
 
           <div className="mt-8">
             <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Demo accounts</div>
