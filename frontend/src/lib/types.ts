@@ -60,6 +60,47 @@ export type DashboardKpis = {
   }[];
 };
 
+export type FuelLog = {
+  id: number;
+  vehicle_id: number;
+  vehicle_name: string | null;
+  trip_id: number | null;
+  liters: number;
+  cost: number;
+  date: string;
+};
+
+export type Expense = {
+  id: number;
+  vehicle_id: number;
+  vehicle_name: string | null;
+  trip_id: number | null;
+  type: string;
+  amount: number;
+  date: string;
+};
+
+export type CostsSummary = {
+  total_fuel_cost: number;
+  total_maintenance_cost: number;
+  total_expenses: number;
+  total_operational_cost: number;
+  per_vehicle: { vehicle_id: number; vehicle_name: string; fuel: number; maintenance: number; total: number }[];
+};
+
+export type AnalyticsSummary = {
+  fuel_efficiency_km_l: number;
+  fleet_utilization_pct: number;
+  operational_cost: number;
+  avg_roi_pct: number;
+  per_vehicle: {
+    vehicle_id: number; registration_no: string; name: string;
+    fuel_cost: number; maintenance_cost: number; total_cost: number; revenue: number; roi_pct: number;
+  }[];
+  monthly_revenue: { month: string; revenue: number }[];
+  costliest_vehicles: { name: string; total_cost: number }[];
+};
+
 export type Maintenance = {
   id: number;
   vehicle_id: number;
