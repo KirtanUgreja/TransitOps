@@ -101,7 +101,7 @@ export default function FleetPage() {
         )}
       </div>
 
-      <div className="rounded-md border-l-2 border-primary bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+      <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
         Registration No. must be unique · Retired / In Shop vehicles are hidden from Trip Dispatcher.
       </div>
 

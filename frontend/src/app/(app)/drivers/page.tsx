@@ -99,7 +99,7 @@ export default function DriversPage() {
         )}
       </div>
 
-      <div className="rounded-md border-l-2 border-signal-alert bg-signal-alert/5 px-3 py-2 text-xs text-muted-foreground">
+      <div className="rounded-lg border border-signal-alert/20 bg-signal-alert/5 px-3 py-2 text-xs text-muted-foreground">
         Expired license or Suspended status → driver is blocked from trip assignment.
       </div>
 

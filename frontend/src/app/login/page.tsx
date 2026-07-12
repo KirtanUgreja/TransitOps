@@ -26,24 +26,23 @@ const SCOPE: Record<Role, string> = {
 };
 
 export default function LoginPage() {
-  const { login, user, ready } = useAuth();
+  const { login, user, clerkError } = useAuth();
   const router = useRouter();
-  const { isLoaded: clerkLoaded, isSignedIn } = useClerkAuth();
+  const { isSignedIn } = useClerkAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // Only leave /login once we're genuinely ready to enter the app:
-  //  - an app session already exists (JWT login), OR
-  //  - Clerk has finished loading and reports a session (its own fallback redirect
-  //    also targets /dashboard; the (app) guard performs the token→JWT bridge there).
-  // Gating on clerkLoaded prevents the /login ↔ /dashboard ping-pong with the guard.
+  // The AuthProvider is the single source of truth: once it has a `user` (either from
+  // the JWT login below or from bridging a Clerk session), enter the app. This page
+  // never touches the Clerk bridge, so it can't race the (app) guard.
   useEffect(() => {
-    if (ready && user) { router.replace("/dashboard"); return; }
-    if (clerkLoaded && isSignedIn) router.replace("/dashboard");
-  }, [ready, user, clerkLoaded, isSignedIn, router]);
-  const bridging = clerkLoaded && isSignedIn;
+    if (user) router.replace("/dashboard");
+  }, [user, router]);
+
+  // Clerk signed in but the app session isn't ready yet → the provider is bridging.
+  const bridging = isSignedIn && !user && !clerkError;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -142,17 +141,28 @@ export default function LoginPage() {
             <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
           </div>
           <div className="space-y-2">
-            <SignInButton mode="modal">
-              <Button variant="outline" className="w-full" disabled={bridging}>
+            {isSignedIn ? (
+              // Already signed into Clerk — don't re-open the modal (single-session mode
+              // makes that error). Just continue into the app (the provider bridges).
+              <Button className="w-full" disabled={bridging}
+                onClick={() => router.replace("/dashboard")}>
                 <ShieldCheck className="size-4" />
-                {bridging ? "Entering…" : "Admin sign-in (Clerk)"}
+                {clerkError ? "Retry" : bridging ? "Entering…" : "Continue as admin"}
               </Button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <button type="button" className="w-full text-center text-xs text-muted-foreground hover:text-foreground">
-                New admin? Create an account
-              </button>
-            </SignUpButton>
+            ) : (
+              <>
+                <SignInButton mode="modal">
+                  <Button variant="outline" className="w-full">
+                    <ShieldCheck className="size-4" /> Admin sign-in (Clerk)
+                  </Button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button type="button" className="w-full text-center text-xs text-muted-foreground hover:text-foreground">
+                    New admin? Create an account
+                  </button>
+                </SignUpButton>
+              </>
+            )}
             <p className="text-center text-[11px] text-muted-foreground">
               Admins sign in with Clerk and manage users. Other roles use the issued credentials above.
             </p>

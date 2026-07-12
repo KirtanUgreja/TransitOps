@@ -83,7 +83,7 @@ export default function MaintenancePage() {
         <div className="space-y-3">
           <DataTable columns={columns} rows={logs} loading={isLoading}
             rowKey={(m) => m.id} empty="No service records." />
-          <div className="space-y-1 rounded-md border-l-2 border-primary bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+          <div className="space-y-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
             <div>Available → creating active record → <span className="font-medium">In Shop</span>.</div>
             <div>In Shop → closing record (not retired) → <span className="font-medium">Available</span>.</div>
             <div>In Shop vehicles are removed from the dispatch pool.</div>

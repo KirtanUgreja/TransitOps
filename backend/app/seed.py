@@ -99,6 +99,27 @@ def seed(db: Session) -> None:
              dispatched_at=now - timedelta(days=2, hours=3), completed_at=now - timedelta(days=2),
              end_odometer_km=52000, fuel_consumed_l=9),
     ]
+
+    # Historical completed trips so the monthly-revenue chart shows a real 6-month trend.
+    # One completed trip roughly per month for the last 5 months (mid-month, so it lands
+    # cleanly in that calendar month), revenue trending upward with variation.
+    history = [
+        (150, 41000, "MINI-08", "Kalol Depot", "Mansa"),                # ~5 months ago
+        (120, 58000, "TRUCK-04", "Ahmedabad Hub", "Sanand Warehouse"),  # ~4 months ago
+        (90, 49000, "VAN-02", "Gandhinagar Depot", "Kalol Depot"),      # ~3 months ago
+        (60, 71000, "TRK-12", "Vatva Industrial Area", "Ahmedabad Hub"),# ~2 months ago
+        (30, 64000, "TRUCK-07", "Sanand Warehouse", "Gandhinagar Depot"),# ~1 month ago
+    ]
+    for days_ago, revenue, name, src, dst in history:
+        veh = v[name]
+        trips.append(Trip(
+            source=src, destination=dst, vehicle=veh, driver=d["Alex"],
+            cargo_weight_kg=1000, planned_distance_km=48, revenue=revenue, status="Completed",
+            dispatched_at=now - timedelta(days=days_ago + 1),
+            completed_at=now - timedelta(days=days_ago),
+            end_odometer_km=veh.odometer_km, fuel_consumed_l=90,
+        ))
+
     db.add_all(trips)
     db.flush()
 

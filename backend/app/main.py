@@ -19,7 +19,9 @@ app = FastAPI(title="TransitOps")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    # Allow localhost and any LAN IP on the dev port, so the app works whether it's
+    # reached via localhost:3000 or the machine's network address (e.g. 192.168.x.x:3000).
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):3000",
     allow_methods=["*"],
     allow_headers=["*"],
 )
