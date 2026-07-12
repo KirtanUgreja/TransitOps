@@ -6,12 +6,12 @@ const TONE: Record<string, string> = {
   Completed: "text-signal-available",
   "On Trip": "text-signal-ontrip",
   Dispatched: "text-signal-ontrip",
-  Active: "text-signal-ontrip",
   "In Shop": "text-signal-shop",
-  Suspended: "text-signal-shop",
-  Cancelled: "text-signal-shop",
+  Active: "text-signal-shop",
+  Draft: "text-signal-shop",
+  Suspended: "text-signal-alert",
+  Cancelled: "text-signal-alert",
   Retired: "text-signal-retired",
-  Draft: "text-signal-retired",
   "Off Duty": "text-signal-retired",
 };
 
@@ -27,6 +27,20 @@ export function StatusBadge({ status, className }: { status: string; className?:
     >
       <span className="size-1.5 rounded-full bg-current" />
       {status}
+    </span>
+  );
+}
+
+// Red outline tag for expired driver licenses.
+export function ExpiredTag({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded border border-signal-alert px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-signal-alert",
+        className,
+      )}
+    >
+      Expired
     </span>
   );
 }
