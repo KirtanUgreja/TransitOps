@@ -104,6 +104,16 @@ and the Python seed remain the source of truth.
 5. React Query invalidates the trips, vehicles, dispatch-options, and dashboard queries, so every
    affected screen reflects the change immediately.
 
+## Deployment
+
+Production runs the same three tiers on managed platforms: the **frontend on Vercel** (on a custom
+domain), the **backend as a Docker image on Render** (`backend/Dockerfile`, `render.yaml`), and
+**Postgres on Neon**. Nothing about the app logic changes — only two things are environment-driven so
+they can differ between local and prod: **CORS** (`ALLOWED_ORIGINS`, so the Vercel domain is allowed)
+and the **database URL** (`db.py` normalizes a raw Neon `postgresql://` string to the `+psycopg` driver
+with SSL). The startup `create_all` + idempotent seed means a fresh Neon database populates itself on
+first boot — the same mechanism that works locally. Full runbook in `docs/deployment.md`.
+
 ## Deferred work
 
 Scoped out of the 8-hour build: user-management edit/deactivate/reset (creation + self-service

@@ -3,6 +3,8 @@
 Three services: **Postgres** (Docker), **backend** (FastAPI), **frontend** (Next.js). Only the backend
 talks to the database; the frontend calls the backend's JWT-authenticated API.
 
+> Deploying to production (Vercel + Render + Neon) instead? See **[docs/deployment.md](deployment.md)**.
+
 ## Prerequisites
 
 | Tool | Version | Install |

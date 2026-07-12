@@ -1,0 +1,31 @@
+# Render blueprint — one-click deploy of the TransitOps backend as a Docker service.
+# In Render: New → Blueprint → point at this repo. Set the `sync: false` values in the dashboard.
+services:
+  - type: web
+    name: transitops-api
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      # Neon connection string — paste as-is; the backend normalizes the scheme + SSL.
+      - key: DATABASE_URL
+        sync: false
+      # Real random secret for signing app JWTs (Render can generate one).
+      - key: JWT_SECRET
+        generateValue: true
+      # Comma-separated production frontend origin(s), e.g. https://transitops.example.com
+      - key: ALLOWED_ORIGINS
+        sync: false
+      # Frontend URL used in credential emails' "Sign in" link.
+      - key: APP_URL
+        sync: false
+      # Clerk Frontend API URL for verifying admin tokens (optional if not using Clerk).
+      - key: CLERK_ISSUER
+        sync: false
+      # Resend (optional) — emails new users their credentials.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        sync: false
