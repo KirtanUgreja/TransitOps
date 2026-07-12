@@ -204,7 +204,8 @@ function VehicleField({ vehicles, value, onChange, error }: {
   return (
     <div className="space-y-1.5">
       <Label>Vehicle</Label>
-      <Select value={value ? String(value) : ""} onValueChange={(v) => v && onChange(Number(v))}>
+      <Select items={Object.fromEntries(vehicles.map((v) => [String(v.id), v.name]))}
+        value={value ? String(value) : ""} onValueChange={(v) => v && onChange(Number(v))}>
         <SelectTrigger><SelectValue placeholder="Select vehicle" /></SelectTrigger>
         <SelectContent>
           {vehicles.map((v) => <SelectItem key={v.id} value={String(v.id)}>{v.name}</SelectItem>)}

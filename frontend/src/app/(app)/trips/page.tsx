@@ -149,6 +149,14 @@ function CreateTrip({ options, onCreated }: { options?: TripOptions; onCreated: 
   const overCapacity = vehicle ? cargo > vehicle.max_capacity_kg : false;
   const over = vehicle ? cargo - vehicle.max_capacity_kg : 0;
 
+  // base-ui Select.Value renders these labels for the selected value (else it shows the raw id).
+  const vehicleItems: Record<string, string> = { [NONE]: "Unassigned" };
+  options?.available_vehicles.forEach((v) => {
+    vehicleItems[String(v.id)] = `${v.name} – ${v.max_capacity_kg.toLocaleString("en-IN")} kg capacity`;
+  });
+  const driverItems: Record<string, string> = { [NONE]: "Unassigned" };
+  options?.available_drivers.forEach((d) => { driverItems[String(d.id)] = `${d.name} · ${d.safety_score}%`; });
+
   const create = useMutation({
     mutationFn: ({ values, dispatch }: { values: CreateValues; dispatch: boolean }) => {
       const body = JSON.stringify({
@@ -173,7 +181,7 @@ function CreateTrip({ options, onCreated }: { options?: TripOptions; onCreated: 
 
         <div className="space-y-1.5">
           <Label>Vehicle (available only)</Label>
-          <Select value={vehicleId} onValueChange={(v) => setVehicleId(v ?? NONE)}>
+          <Select items={vehicleItems} value={vehicleId} onValueChange={(v) => setVehicleId(v ?? NONE)}>
             <SelectTrigger><SelectValue placeholder="Select vehicle" /></SelectTrigger>
             <SelectContent>
               <SelectItem value={NONE}>Unassigned</SelectItem>
@@ -188,7 +196,7 @@ function CreateTrip({ options, onCreated }: { options?: TripOptions; onCreated: 
 
         <div className="space-y-1.5">
           <Label>Driver (available only)</Label>
-          <Select value={driverId} onValueChange={(v) => setDriverId(v ?? NONE)}>
+          <Select items={driverItems} value={driverId} onValueChange={(v) => setDriverId(v ?? NONE)}>
             <SelectTrigger><SelectValue placeholder="Select driver" /></SelectTrigger>
             <SelectContent>
               <SelectItem value={NONE}>Unassigned</SelectItem>

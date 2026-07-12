@@ -106,14 +106,16 @@ export default function FleetPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Select value={type} onValueChange={(v) => setType(v ?? ALL)}>
+        <Select items={{ [ALL]: "Type: All", ...Object.fromEntries(VEHICLE_TYPES.map((t) => [t, t])) }}
+          value={type} onValueChange={(v) => setType(v ?? ALL)}>
           <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>Type: All</SelectItem>
             {VEHICLE_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={status} onValueChange={(v) => setStatus(v ?? ALL)}>
+        <Select items={{ [ALL]: "Status: All", ...Object.fromEntries(VEHICLE_STATUSES.map((s) => [s, s])) }}
+          value={status} onValueChange={(v) => setStatus(v ?? ALL)}>
           <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>Status: All</SelectItem>

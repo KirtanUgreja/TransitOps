@@ -120,7 +120,8 @@ function LogForm({ vehicles, onLogged }: { vehicles: Vehicle[]; onLogged: () => 
       <form onSubmit={handleSubmit((v) => log.mutate(v))} className="space-y-3">
         <div className="space-y-1.5">
           <Label>Vehicle</Label>
-          <Select value={vehicleId ? String(vehicleId) : ""}
+          <Select items={Object.fromEntries(vehicles.map((v) => [String(v.id), `${v.name} · ${v.status}`]))}
+            value={vehicleId ? String(vehicleId) : ""}
             onValueChange={(v) => v && setValue("vehicle_id", Number(v))}>
             <SelectTrigger><SelectValue placeholder="Select vehicle" /></SelectTrigger>
             <SelectContent>
