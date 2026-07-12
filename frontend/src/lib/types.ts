@@ -60,6 +60,21 @@ export type DashboardKpis = {
   }[];
 };
 
+export type Maintenance = {
+  id: number;
+  vehicle_id: number;
+  vehicle_name: string | null;
+  service_type: string;
+  cost: number;
+  date: string;
+  status: string;
+};
+
+export type TripOptions = {
+  available_vehicles: { id: number; name: string; registration_no: string; max_capacity_kg: number }[];
+  available_drivers: { id: number; name: string; license_no: string; safety_score: number }[];
+};
+
 export const VEHICLE_TYPES = ["Van", "Truck", "Mini"] as const;
 export const VEHICLE_STATUSES = ["Available", "On Trip", "In Shop", "Retired"] as const;
 export const DRIVER_STATUSES = ["Available", "On Trip", "Off Duty", "Suspended"] as const;
